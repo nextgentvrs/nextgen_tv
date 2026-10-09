@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plataforma B2B White-Label – Gerador de Player IPTV</title>
+<!-- Biblioteca para gerar a imagem do player -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- SDK do Firebase (Compat) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+:root {
+  --bg: #0b0f19;
+  --card: #131b2e;
+  --border: #22304c;
+  --text: #f1f5f9;
+  --text-muted: #94a3b8;
+  --primary: #7c5cff;
+  --primary-hover: #6a49eb;
+  --success: #10b981;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+body { background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+
+.builder-container { display: flex; width: 100%; height: 100vh; overflow: hidden; }
+
+/* Coluna Esquerda: Controles e Planos */
+.controls-pane { width: 510px; background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; height: 100%; overflow-y: auto; padding: 20px; }
+.controls-pane h1 { font-size: 1.25rem; margin-bottom: 4px; color: #fff; display: flex; align-items: center; gap: 8px; }
+.controls-pane p.sub { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px; }
+
+.section-group { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+.section-group label.group-title { display: block; font-size: 0.8rem; font-weight: 700; color: var(--primary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.control-item { margin-bottom: 10px; }
+.control-item:last-child { margin-bottom: 0; }
+.control-item label { display: block; font-size: 0.82rem; color: var(--text); margin-bottom: 4px; }
+.control-item input[type="text"], .control-item select { width: 100%; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.9rem; }
+
+.color-group { display: flex; gap: 8px; }
+.color-item { flex: 1; }
+.color-item input[type="color"] { -webkit-appearance: none; border: none; width: 100%; height: 34px; border-radius: 8px; cursor: pointer; background: transparent; }
+.color-item input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.color-item input[type="color"]::-webkit-color-swatch { border: 1px solid var(--border); border-radius: 8px; }
+
+/* Planos e Preços Diretos */
+.plans-grid { display: flex; flex-direction: column; gap: 8px; }
+.plan-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; cursor: pointer; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }
+.plan-card:hover { border-color: var(--primary); }
+.plan-card.active { border-color: var(--primary); background: rgba(124, 92, 255, 0.15); box-shadow: 0 0 15px rgba(124,92,255,0.2); }
+.plan-info h3 { font-size: 0.88rem; font-weight: 700; color: #fff; margin-bottom: 2px; }
+.plan-info p { font-size: 0.76rem; color: var(--text-muted); }
+.plan-price { font-weight: 800; color: var(--success); font-size: 0.95rem; text-align: right; }
+.plan-price span { display: block; font-size: 0.68rem; color: var(--text-muted); font-weight: normal; }
+
+/* Sub-opções do Painel */
+.sub-clients-box { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
+.plan-card.active .sub-clients-box.show-sub { display: block; }
+
+.perks-list { font-size: 0.73rem; color: var(--success); margin-top: 6px; display: flex; flex-direction: column; gap: 2px; }
+.domain-checkbox { margin-top: 8px; display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--text); }
+
+/* Box de Orçamento */
+.pricing-box { background: rgba(124, 92, 255, 0.1); border: 1px solid var(--primary); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+.pricing-box .title { font-size: 0.82rem; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 6px; }
+.price-row { display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 4px; color: var(--text-muted); }
+.price-total { display: flex; justify-content: space-between; font-size: 0.98rem; font-weight: 800; color: #fff; border-top: 1px dashed var(--border); padding-top: 6px; margin-top: 6px; }
+
+.btn-action { width: 100%; background: linear-gradient(90deg, var(--primary), #00d4ff); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.95rem; transition: opacity 0.2s; }
+.btn-action:hover { opacity: 0.9; }
+.btn-action:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Coluna Direita: Preview do Player */
+.preview-pane { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at center, #1b243b 0%, #0b0f19 100%); padding: 20px; overflow: hidden; }
+
+.tv-container { width: 100%; max-width: 880px; height: 500px; background: #000; border: 8px solid #222; border-radius: 16px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow: hidden; position: relative; }
+.tv-screen { flex: 1; display: flex; flex-direction: column; background: var(--preview-bg, #0f172a); color: #fff; padding: 18px; position: relative; overflow: hidden; }
+
+.tv-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px; }
+.tv-brand { font-size: 1.15rem; font-weight: 800; }
+.tv-brand span { background: linear-gradient(90deg, var(--c1, #7c5cff), var(--c3, #00d4ff)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.tv-datetime { font-size: 0.78rem; color: var(--text-muted); }
+
+.tv-menu { display: flex; gap: 8px; margin-bottom: 12px; }
+.tv-tab { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 6px 14px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; color: var(--text-muted); cursor: pointer; }
+.tv-tab.active { background: linear-gradient(90deg, var(--c1, #7c5cff), var(--c2, #3b82f6)); color: #fff; border-color: transparent; }
+
+/* Continuar Assistindo (Filmes) */
+.continue-watchlist { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 10px; margin-bottom: 10px; display: none; }
+.continue-watchlist.active { display: block; }
+.continue-title { font-size: 0.75rem; font-weight: 700; color: var(--c3, #00d4ff); margin-bottom: 6px; text-transform: uppercase; display: flex; justify-content: space-between; }
+.continue-items { display: flex; gap: 8px; }
+.continue-card { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 6px 10px; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.continue-movie-name { font-size: 0.75rem; font-weight: 600; }
+.progress-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--c1, #7c5cff); border-radius: 2px; width: 65%; }
+
+.tv-content-area { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; overflow: hidden; }
+.media-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px; text-align: center; }
+.media-icon { font-size: 1.4rem; margin-bottom: 2px; }
+.media-title { font-size: 0.72rem; font-weight: 600; }
+
+.tv-footer { margin-top: auto; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 6px 10px; border-radius: 6px; font-size: 0.72rem; color: var(--text-muted); border-left: 3px solid var(--c1, #7c5cff); }
+</style>
+</head>
+<body>
+
+<div class="builder-container">
+  <!-- COLUNA ESQUERDA: CONTROLES E PLANOS -->
+  <div class="controls-pane">
+    <h1>🚀 Gerador IPTV White-Label</h1>
+    <p class="sub">Personalize seu player e escolha seu plano abaixo.</p>
+
+    <!-- IDENTIDADE DO PLAYER -->
+    <div class="section-group">
+      <label class="group-title">1. Identidade Visual do Player</label>
+      <div class="control-item">
+        <label>Nome do Aplicativo</label>
+        <input type="text" id="appName" value="NextGen Play">
+      </div>
+      <div class="control-item" style="margin-top:8px;">
+        <label>Rodapé / Contato</label>
+        <input type="text" id="appContact" value="WhatsApp: (51) 98949-8171 • Atendimento 24h">
+      </div>
+      <div class="control-item" style="margin-top:8px;">
+        <label>Cores do Gradiente & Fundo</label>
+        <div class="color-group">
+          <div class="color-item"><input type="color" id="color1" value="#7c5cff" title="Cor 1"></div>
+          <div class="color-item"><input type="color" id="color2" value="#3b82f6" title="Cor 2"></div>
+          <div class="color-item"><input type="color" id="color3" value="#00d4ff" title="Cor 3"></div>
+          <div class="color-item"><input type="color" id="bgAppColor" value="#0f172a" title="Fundo"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ESCOLHA DE PLANOS E PREÇOS -->
+    <div class="section-group">
+      <label class="group-title">2. Escolha o Modelo de Contratação</label>
+      <div class="plans-grid">
+        
+        <!-- PLANO 1 -->
+        <div class="plan-card active" id="planCard1" onclick="selectPlan('plan1')">
+          <div class="plan-info">
+            <h3>Player Exclusivo</h3>
+            <p>Sem manutenção, APK seu para sempre.</p>
+          </div>
+          <div class="plan-price">
+            R$ 189,90
+            <span>único</span>
+          </div>
+        </div>
+
+        <!-- PLANO 2 -->
+        <div class="plan-card" id="planCard2" onclick="selectPlan('plan2')">
+          <div class="plan-info">
+            <h3>Projeto Completo + Painel</h3>
+            <p>Painel administrativo e gestão de clientes.</p>
+            
+            <div class="sub-clients-box show-sub" onclick="event.stopPropagation()">
+              <label style="font-size: 0.78rem; margin-bottom: 4px; display: block; color: var(--text);">Volume de Clientes (Manutenção):</label>
+              <select id="clientRange" onchange="updatePricing()">
+                <option value="40">Até 100 clientes (R$ 40/mês)</option>
+                <option value="75">De 101 a 200 clientes (R$ 75/mês)</option>
+                <option value="90">Acima de 200 clientes (R$ 90/mês)</option>
+              </select>
+
+              <label class="domain-checkbox">
+                <input type="checkbox" id="hasDomain" onchange="updatePricing()"> Adicionar Domínio Próprio (+ R$ 70/ano)
+              </label>
+
+              <div class="perks-list">
+                <span>✔ E-mail Profissional Grátis</span>
+                <span>✔ Conta no Banco de Dados Grátis</span>
+              </div>
+            </div>
+          </div>
+          <div class="plan-price">
+            R$ 359,00
+            <span id="lblMaintBadge">+ R$ 40/mês</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RESUMO DO ORÇAMENTO -->
+    <div class="pricing-box">
+      <div class="title">Resumo do Investimento</div>
+      <div class="price-row"><span id="lblSelectedPlan">Player Exclusivo (Sem Manutenção)</span> <span id="lblPriceBase">R$ 189,90</span></div>
+      <div class="price-row" id="rowExtraMaint" style="display:none;"><span>Manutenção do Sistema:</span> <span id="lblMaintValue">R$ 40,00 /mês</span></div>
+      <div class="price-row" id="rowExtraDomain" style="display:none;"><span>Domínio Próprio:</span> <span>R$ 70,00 /ano</span></div>
+      <div class="price-total"><span>Total Inicial:</span> <span id="lblPriceTotal">R$ 189,90</span></div>
+    </div>
+
+    <button type="button" id="btnSubmit" class="btn-action" onclick="finalizarPedido()">💾 Salvar Configurações e Gerar App</button>
+  </div>
+
+  <!-- COLUNA DIREITA: PREVIEW DO PLAYER AO VIVO -->
+  <div class="preview-pane">
+    <div class="tv-container" id="tvContainerScreenshot">
+      <div class="tv-screen" id="tvScreen">
+        
+        <div class="tv-header">
+          <div class="tv-brand" id="prevBrand">NextGen <span>Play</span></div>
+          <div class="tv-datetime">14:38 • Preview Ativo</div>
+        </div>
+
+        <div class="tv-menu">
+          <div class="tv-tab active" onclick="switchTab('live', this)">📺 AO VIVO</div>
+          <div class="tv-tab" onclick="switchTab('movies', this)">🎬 FILMES (VOD)</div>
+          <div class="tv-tab" onclick="switchTab('series', this)">🍿 SÉRIES</div>
+        </div>
+
+        <!-- Bloco de Continuar Assistindo (Filmes) -->
+        <div class="continue-watchlist" id="continueWatchlist">
+          <div class="continue-title"><span>▶ Continuar Assistindo</span> <span>Salvo no Banco</span></div>
+          <div class="continue-items">
+            <div class="continue-card">
+              <div class="continue-movie-name">🦸‍♂️ Vingadores: Ultimato</div>
+              <div class="progress-bar"><div class="progress-fill" style="width: 65%;"></div></div>
+            </div>
+            <div class="continue-card">
+              <div class="continue-movie-name">🏎️ Velozes & Furiosos 10</div>
+              <div class="progress-bar"><div class="progress-fill" style="width: 30%;"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tv-content-area" id="tvContent">
+          <div class="media-card"><div class="media-icon">⚽</div><div class="media-title">Premiere HD</div></div>
+          <div class="media-card"><div class="media-icon">🎬</div><div class="media-title">Telecine Action</div></div>
+          <div class="media-card"><div class="media-icon">🌍</div><div class="media-title">HBO Mundi</div></div>
+          <div class="media-card"><div class="media-icon">🥊</div><div class="media-title">Combate</div></div>
+        </div>
+
+        <div class="tv-footer" id="prevFooter">
+          WhatsApp: (51) 98949-8171 • Atendimento 24h
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- CONFIGURAÇÃO DO FIREBASE (CONFIGURADA COM SEUS DADOS) ---
+const firebaseConfig = {
+  apiKey: "AIzaSyBrp9JlMd9zBQzByPRBLCStLiBh5z80Y",
+  authDomain: "nextgentv.firebaseapp.com",
+  projectId: "nextgentv",
+  storageBucket: "nextgentv.firebasestorage.app",
+  messagingSenderId: "999074190973",
+  appId: "1:999074190973:web:967de16614c5274a760314"
+};
+
+// Inicializa o Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const inputName = document.getElementById('appName');
+const inputContact = document.getElementById('appContact');
+const color1 = document.getElementById('color1');
+const color2 = document.getElementById('color2');
+const color3 = document.getElementById('color3');
+const bgAppColor = document.getElementById('bgAppColor');
+const tvScreen = document.getElementById('tvScreen');
+const prevBrand = document.getElementById('prevBrand');
+const prevFooter = document.getElementById('prevFooter');
+const tvContent = document.getElementById('tvContent');
+const continueWatchlist = document.getElementById('continueWatchlist');
+
+const lblSelectedPlan = document.getElementById('lblSelectedPlan');
+const lblPriceBase = document.getElementById('lblPriceBase');
+const rowExtraMaint = document.getElementById('rowExtraMaint');
+const lblMaintValue = document.getElementById('lblMaintValue');
+const lblMaintBadge = document.getElementById('lblMaintBadge');
+const rowExtraDomain = document.getElementById('rowExtraDomain');
+const lblPriceTotal = document.getElementById('lblPriceTotal');
+const clientRange = document.getElementById('clientRange');
+const hasDomain = document.getElementById('hasDomain');
+const btnSubmit = document.getElementById('btnSubmit');
+
+let activePlan = 'plan1';
+
+function selectPlan(plan) {
+  activePlan = plan;
+  document.getElementById('planCard1').classList.remove('active');
+  document.getElementById('planCard2').classList.remove('active');
+  document.getElementById('planCard' + (plan === 'plan1' ? '1' : '2')).classList.add('active');
+  updatePricing();
+}
+
+function updatePricing() {
+  if (activePlan === 'plan1') {
+    lblSelectedPlan.textContent = 'Player Exclusivo (Sem Manutenção)';
+    lblPriceBase.textContent = 'R$ 189,90';
+    rowExtraMaint.style.display = 'none';
+    rowExtraDomain.style.display = 'none';
+    lblPriceTotal.textContent = 'R$ 189,90';
+  } else {
+    const maintCost = parseInt(clientRange.value);
+    const domainActive = hasDomain.checked;
+
+    lblSelectedPlan.textContent = 'Projeto Completo + Painel + Gestão';
+    lblPriceBase.textContent = 'R$ 359,00';
+    
+    rowExtraMaint.style.display = 'flex';
+    lblMaintValue.textContent = `R$ ${maintCost},00 /mês`;
+    lblMaintBadge.textContent = `+ R$ ${maintCost}/mês`;
+
+    let totalText = `R$ 359,00 (+ R$ ${maintCost},00/mês)`;
+    if (domainActive) {
+      rowExtraDomain.style.display = 'flex';
+      totalText += ' + Domínio (R$ 70/ano)';
+    } else {
+      rowExtraDomain.style.display = 'none';
+    }
+
+    lblPriceTotal.textContent = totalText;
+  }
+}
+
+function updatePreviewVisual() {
+  const nameVal = inputName.value.trim() || 'Player';
+  prevBrand.innerHTML = nameVal + ' <span>Play</span>';
+  prevFooter.textContent = inputContact.value.trim();
+
+  tvScreen.style.setProperty('--c1', color1.value);
+  tvScreen.style.setProperty('--c2', color2.value);
+  tvScreen.style.setProperty('--c3', color3.value);
+  tvScreen.style.setProperty('--preview-bg', bgAppColor.value);
+  tvScreen.style.backgroundColor = bgAppColor.value;
+}
+
+inputName.oninput = updatePreviewVisual;
+inputContact.oninput = updatePreviewVisual;
+color1.oninput = updatePreviewVisual;
+color2.oninput = updatePreviewVisual;
+color3.oninput = updatePreviewVisual;
+bgAppColor.oninput = updatePreviewVisual;
+
+function switchTab(tab, el) {
+  document.querySelectorAll('.tv-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+
+  if (tab === 'movies') {
+    continueWatchlist.classList.add('active');
+    tvContent.innerHTML = `
+      <div class="media-card"><div class="media-icon">🦸‍♂️</div><div class="media-title">Vingadores</div></div>
+      <div class="media-card"><div class="media-icon">🕷️</div><div class="media-title">Homem-Aranha</div></div>
+      <div class="media-card"><div class="media-icon">🦇</div><div class="media-title">Batman</div></div>
+      <div class="media-card"><div class="media-icon">🏎️</div><div class="media-title">Velozes 10</div></div>
+    `;
+  } else if (tab === 'series') {
+    continueWatchlist.classList.remove('active');
+    tvContent.innerHTML = `
+      <div class="media-card"><div class="media-icon">⚡</div><div class="media-title">Stranger Things</div></div>
+      <div class="media-card"><div class="media-icon">👑</div><div class="media-title">The Crown</div></div>
+      <div class="media-card"><div class="media-icon">🐉</div><div class="media-title">House of Dragon</div></div>
+      <div class="media-card"><div class="media-icon">💊</div><div class="media-title">Breaking Bad</div></div>
+    `;
+  } else {
+    continueWatchlist.classList.remove('active');
+    tvContent.innerHTML = `
+      <div class="media-card"><div class="media-icon">⚽</div><div class="media-title">Premiere HD</div></div>
+      <div class="media-card"><div class="media-icon">🎬</div><div class="media-title">Telecine Action</div></div>
+      <div class="media-card"><div class="media-icon">🌍</div><div class="media-title">HBO Mundi</div></div>
+      <div class="media-card"><div class="media-icon">🥊</div><div class="media-title">Combate</div></div>
+    `;
+  }
+}
+
+updatePreviewVisual();
+
+// Função para fechar o pedido, gerar imagem, capturar cores exatas e salvar no Firebase
+async function finalizarPedido() {
+  btnSubmit.disabled = true;
+  btnSubmit.textContent = '⏳ Gerando print e salvando no Firebase...';
+
+  try {
+    // 1. Gera a imagem do player em base64 usando html2canvas
+    const containerEl = document.getElementById('tvContainerScreenshot');
+    const canvas = await html2canvas(containerEl, { scale: 0.8, backgroundColor: null });
+    const playerImageBase64 = canvas.toDataURL('image/png');
+
+    // 2. Coleta os dados de cores e configurações
+    const dadosProjeto = {
+      appName: inputName.value.trim(),
+      appContact: inputContact.value.trim(),
+      cores: {
+        cor1: color1.value,       // Ex: #7c5cff
+        cor2: color2.value,       // Ex: #3b82f6
+        cor3: color3.value,       // Ex: #00d4ff
+        fundo: bgAppColor.value   // Ex: #0f172a
+      },
+      planoSelecionado: activePlan === 'plan1' ? 'Player Exclusivo' : 'Projeto Completo + Painel',
+      manutencaoMensal: activePlan === 'plan2' ? parseInt(clientRange.value) : 0,
+      dominioProprio: activePlan === 'plan2'  ? hasDomain.checked : false,
+      resumoTotal: lblPriceTotal.textContent,
+      playerImage: playerImageBase64, // Imagem pronta para exibir no seu painel
+      criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    // 3. Salva na coleção "projetos_clientes" do Firestore
+    await db.collection('projetos_clientes').add(dadosProjeto);
+
+    alert('✅ Projeto salvo com sucesso no Firebase!');
+  } catch (error) {
+    console.error('Erro ao salvar no Firebase:', error);
+    alert('❌ Erro ao salvar o pedido. Verifique o console para detalhes.');
+  } finally {
+    btnSubmit.disabled = false;
+    btnSubmit.textContent = '💾 Salvar Configurações e Gerar App';
+  }
+}
+</script>
+
+</body>
+</html>

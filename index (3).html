@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NextGen TV - A tecnologia na sua tela</title>
+    <!-- Tailwind CSS para estilização moderna -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Link para o PWA (Manifesto) -->
+    <link rel="manifest" href="manifest.json">
+</head>
+<body class="bg-black text-white min-h-screen flex items-center justify-center p-4 selection:bg-blue-600 selection:text-white">
+
+    <!-- Modal de Aviso Global (Controlado pelo Painel Master) -->
+    <div id="modalAvisoGlobal" class="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-zinc-900 border border-zinc-700 p-6 rounded-2xl w-full max-w-md shadow-2xl text-center space-y-4">
+            <div class="text-blue-500 text-3xl font-bold">📢</div>
+            <h3 id="tituloAvisoGlobal" class="text-xl font-bold text-white">Aviso Importante</h3>
+            
+            <!-- Imagem opcional enviada pelo painel -->
+            <div id="containerImagemGlobal" class="hidden">
+                <img id="imagemAvisoGlobal" src="" class="max-h-48 mx-auto rounded-xl object-contain border border-zinc-800 shadow-md" alt="Aviso">
+            </div>
+
+            <p id="textoAvisoGlobal" class="text-sm text-zinc-300 leading-relaxed">A carregar mensagem...</p>
+            
+            <!-- Botão com bloqueio de 5 segundos -->
+            <button id="btnFecharAviso" disabled 
+                class="w-full bg-zinc-800 text-zinc-500 font-bold py-2.5 rounded-xl transition duration-200 text-sm cursor-not-allowed">
+                Aguarde (5s) para fechar
+            </button>
+        </div>
+    </div>
+
+    <div class="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl p-8 space-y-8 text-center">
+        
+        <!-- Mensagem Central / Logotipo -->
+        <div class="space-y-3">
+            <h1 class="text-3xl font-extrabold tracking-tight text-blue-500">NextGen TV</h1>
+            <p class="text-base font-medium text-zinc-300">A tecnologia na sua tela.</p>
+        </div>
+
+        <!-- Botões de Ação Principais -->
+        <div class="space-y-4">
+            <!-- Opção 1: O melhor player Grátis -->
+            <a href="cadastro.html" 
+                class="block w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-blue-600/20 transition duration-200">
+                O melhor player Grátis
+            </a>
+
+            <!-- Opção 2: Consulte o melhor conteúdo (Atualizado com o link fornecido) -->
+            <a href="https://cristianbesminoff-hue.github.io/next.gen.tv.painel/" target="_blank" rel="noopener noreferrer"
+                class="block w-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 font-semibold py-3.5 px-4 rounded-xl transition duration-200">
+                Consulte o melhor conteúdo
+            </a>
+        </div>
+
+        <!-- Divisor sutil -->
+        <div class="border-t border-zinc-900 pt-6">
+            <!-- Direcionado para criador.html -->
+            <a href="criador.html" class="group block space-y-1 p-3 rounded-xl hover:bg-zinc-900/50 transition duration-200">
+                <span class="text-xs font-bold text-blue-400 uppercase tracking-wider block">Área do Revendedor</span>
+                <p class="text-sm text-zinc-400 group-hover:text-zinc-200 transition">
+                    Você quer ter seu player personalizado? <span class="text-blue-400 underline font-semibold">Clique e saiba mais</span>
+                </p>
+            </a>
+        </div>
+
+    </div>
+
+    <!-- Script de Conexão com o Firebase para Buscar o Aviso Global e Imagem -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBrp9JlMd9zBUqzByPRBLCStLiLbH5z80Y",
+            authDomain: "nextgentv.firebaseapp.com",
+            projectId: "nextgentv",
+            storageBucket: "nextgentv.firebasestorage.app",
+            messagingSenderId: "999074190973",
+            appId: "1:999074190973:web:967de16614c5274a760314"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const docRef = doc(db, "configuracoes", "aviso_player");
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const dados = docSnap.data();
+
+                    if (dados.ativo === true && dados.mensagem) {
+                        document.getElementById('tituloAvisoGlobal').innerText = dados.titulo || "Aviso Importante";
+                        document.getElementById('textoAvisoGlobal').innerText = dados.mensagem;
+
+                        // Verifica e renderiza a imagem se houver alguma anexada
+                        const containerImg = document.getElementById('containerImagemGlobal');
+                        const tagImg = document.getElementById('imagemAvisoGlobal');
+                        if (dados.imagem) {
+                            tagImg.src = dados.imagem;
+                            containerImg.classList.remove('hidden');
+                        } else {
+                            containerImg.classList.add('hidden');
+                        }
+
+                        document.getElementById('modalAvisoGlobal').classList.remove('hidden');
+
+                        // Lógica da contagem decrescente de 5 segundos no botão
+                        let segundosRestantes = 5;
+                        const btnFechar = document.getElementById('btnFecharAviso');
+                        
+                        const intervalo = setInterval(() => {
+                            segundosRestantes--;
+                            if (segundosRestantes > 0) {
+                                btnFechar.innerText = `Aguarde (${segundosRestantes}s) para fechar`;
+                            } else {
+                                clearInterval(intervalo);
+                                btnFechar.innerText = "Compreendido / Fechar";
+                                btnFechar.disabled = false;
+                                btnFechar.className = "w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl transition duration-200 text-sm cursor-pointer shadow-lg shadow-blue-600/20";
+                                btnFechar.onclick = () => {
+                                    document.getElementById('modalAvisoGlobal').classList.add('hidden');
+                                };
+                            }
+                        }, 1000);
+                    }
+                }
+            } catch (e) {
+                console.error("Erro ao carregar o aviso global do Firebase:", e);
+            }
+        });
+    </script>
+
+    <!-- Script de Registo do PWA (Service Worker) -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(() => console.log("PWA Ativo com sucesso!"))
+                    .catch((err) => console.log("Erro ao ativar PWA:", err));
+            });
+        }
+    </script>
+</body>
+</html>
