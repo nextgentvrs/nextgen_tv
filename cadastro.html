@@ -12,7 +12,7 @@
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyBrp9JLmd9zBQzByPRBLCStLiLbH5z80Y",
+            apiKey: "AIzaSyBrp9JlMd9zBUqzByPRBLCStLiLbH5z80Y",
             authDomain: "nextgentv.firebaseapp.com",
             projectId: "nextgentv",
             storageBucket: "nextgentv.firebasestorage.app",
@@ -21,7 +21,7 @@
         };
 
         // ===== Abre o player: app nativo quando possível, player web nos demais casos =====
-        const URL_DOWNLOAD_APP = "https://cristianbesminoff-hue.github.io/NextGen.TV/"; // página onde o cliente baixa o APK (troque)
+        const URL_DOWNLOAD_APP = "https://nextgentvrs.github.io/nextgen_tv/"; // página onde o cliente baixa o APK (troque)
 
         function irParaPlayer() {
             const ua = navigator.userAgent;
@@ -33,8 +33,8 @@
                 location.href = 'intent://player#Intent;scheme=nextgen;package=tv.nextgen.app;S.browser_fallback_url='
                     + encodeURIComponent(URL_DOWNLOAD_APP) + ';end';
             } else {
-                // PC e iPhone: continua como antes, no player web
-                window.location.href = 'player.html';
+                // PC e iPhone: o player é o app Android
+                alert('O player funciona no app Android. Abra este link pelo celular ou TV Box.');
             }
         }
 
