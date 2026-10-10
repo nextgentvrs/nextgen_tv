@@ -44,7 +44,7 @@
         <!-- Botões de Ação Principais -->
         <div class="space-y-4">
             <!-- Opção 1: O melhor player Grátis -->
-            <a href="cadastro.html" 
+            <a href="nextgen://player" onclick="return abrirPlayer(event)" 
                 class="block w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-blue-600/20 transition duration-200">
                 O melhor player Grátis
             </a>
@@ -134,6 +134,18 @@
                 console.error("Erro ao carregar o aviso global do Firebase:", e);
             }
         });
+    </script>
+
+    <!-- Botão do player: dentro do app abre o player; fora do app mostra um aviso -->
+    <script>
+        function abrirPlayer(e) {
+            if (!navigator.userAgent.includes('NextGenApp')) {
+                e.preventDefault();
+                alert('O player funciona dentro do app NextGen.TV (Android, Google TV e Fire Stick).');
+                return false;
+            }
+            return true;
+        }
     </script>
 
     <!-- Script de Registo do PWA (Service Worker) -->
