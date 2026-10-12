@@ -3,420 +3,295 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Plataforma B2B White-Label – Gerador de Player IPTV</title>
-<!-- Biblioteca para gerar a imagem do player -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<!-- SDK do Firebase (Compat) -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
+<title>NextGen TV - Crie o seu player</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Poppins:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Oswald:wght@400;600&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #0b0f19;
-  --card: #131b2e;
-  --border: #22304c;
-  --text: #f1f5f9;
-  --text-muted: #94a3b8;
-  --primary: #7c5cff;
-  --primary-hover: #6a49eb;
-  --success: #10b981;
-}
-
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-body { background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
-
-.builder-container { display: flex; width: 100%; height: 100vh; overflow: hidden; }
-
-/* Coluna Esquerda: Controles e Planos */
-.controls-pane { width: 510px; background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; height: 100%; overflow-y: auto; padding: 20px; }
-.controls-pane h1 { font-size: 1.25rem; margin-bottom: 4px; color: #fff; display: flex; align-items: center; gap: 8px; }
-.controls-pane p.sub { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px; }
-
-.section-group { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
-.section-group label.group-title { display: block; font-size: 0.8rem; font-weight: 700; color: var(--primary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-
-.control-item { margin-bottom: 10px; }
-.control-item:last-child { margin-bottom: 0; }
-.control-item label { display: block; font-size: 0.82rem; color: var(--text); margin-bottom: 4px; }
-.control-item input[type="text"], .control-item select { width: 100%; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.9rem; }
-
-.color-group { display: flex; gap: 8px; }
-.color-item { flex: 1; }
-.color-item input[type="color"] { -webkit-appearance: none; border: none; width: 100%; height: 34px; border-radius: 8px; cursor: pointer; background: transparent; }
-.color-item input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-.color-item input[type="color"]::-webkit-color-swatch { border: 1px solid var(--border); border-radius: 8px; }
-
-/* Planos e Preços Diretos */
-.plans-grid { display: flex; flex-direction: column; gap: 8px; }
-.plan-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; cursor: pointer; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }
-.plan-card:hover { border-color: var(--primary); }
-.plan-card.active { border-color: var(--primary); background: rgba(124, 92, 255, 0.15); box-shadow: 0 0 15px rgba(124,92,255,0.2); }
-.plan-info h3 { font-size: 0.88rem; font-weight: 700; color: #fff; margin-bottom: 2px; }
-.plan-info p { font-size: 0.76rem; color: var(--text-muted); }
-.plan-price { font-weight: 800; color: var(--success); font-size: 0.95rem; text-align: right; }
-.plan-price span { display: block; font-size: 0.68rem; color: var(--text-muted); font-weight: normal; }
-
-/* Sub-opções do Painel */
-.sub-clients-box { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
-.plan-card.active .sub-clients-box.show-sub { display: block; }
-
-.perks-list { font-size: 0.73rem; color: var(--success); margin-top: 6px; display: flex; flex-direction: column; gap: 2px; }
-.domain-checkbox { margin-top: 8px; display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--text); }
-
-/* Box de Orçamento */
-.pricing-box { background: rgba(124, 92, 255, 0.1); border: 1px solid var(--primary); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
-.pricing-box .title { font-size: 0.82rem; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 6px; }
-.price-row { display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 4px; color: var(--text-muted); }
-.price-total { display: flex; justify-content: space-between; font-size: 0.98rem; font-weight: 800; color: #fff; border-top: 1px dashed var(--border); padding-top: 6px; margin-top: 6px; }
-
-.btn-action { width: 100%; background: linear-gradient(90deg, var(--primary), #00d4ff); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.95rem; transition: opacity 0.2s; }
-.btn-action:hover { opacity: 0.9; }
-.btn-action:disabled { opacity: 0.5; cursor: not-allowed; }
-
-/* Coluna Direita: Preview do Player */
-.preview-pane { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at center, #1b243b 0%, #0b0f19 100%); padding: 20px; overflow: hidden; }
-
-.tv-container { width: 100%; max-width: 880px; height: 500px; background: #000; border: 8px solid #222; border-radius: 16px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow: hidden; position: relative; }
-.tv-screen { flex: 1; display: flex; flex-direction: column; background: var(--preview-bg, #0f172a); color: #fff; padding: 18px; position: relative; overflow: hidden; }
-
-.tv-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px; }
-.tv-brand { font-size: 1.15rem; font-weight: 800; }
-.tv-brand span { background: linear-gradient(90deg, var(--c1, #7c5cff), var(--c3, #00d4ff)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.tv-datetime { font-size: 0.78rem; color: var(--text-muted); }
-
-.tv-menu { display: flex; gap: 8px; margin-bottom: 12px; }
-.tv-tab { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 6px 14px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; color: var(--text-muted); cursor: pointer; }
-.tv-tab.active { background: linear-gradient(90deg, var(--c1, #7c5cff), var(--c2, #3b82f6)); color: #fff; border-color: transparent; }
-
-/* Continuar Assistindo (Filmes) */
-.continue-watchlist { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 10px; margin-bottom: 10px; display: none; }
-.continue-watchlist.active { display: block; }
-.continue-title { font-size: 0.75rem; font-weight: 700; color: var(--c3, #00d4ff); margin-bottom: 6px; text-transform: uppercase; display: flex; justify-content: space-between; }
-.continue-items { display: flex; gap: 8px; }
-.continue-card { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 6px 10px; flex: 1; display: flex; flex-direction: column; gap: 4px; }
-.continue-movie-name { font-size: 0.75rem; font-weight: 600; }
-.progress-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; overflow: hidden; }
-.progress-fill { height: 100%; background: var(--c1, #7c5cff); border-radius: 2px; width: 65%; }
-
-.tv-content-area { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; overflow: hidden; }
-.media-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px; text-align: center; }
-.media-icon { font-size: 1.4rem; margin-bottom: 2px; }
-.media-title { font-size: 0.72rem; font-weight: 600; }
-
-.tv-footer { margin-top: auto; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 6px 10px; border-radius: 6px; font-size: 0.72rem; color: var(--text-muted); border-left: 3px solid var(--c1, #7c5cff); }
+body{font-family:Inter,system-ui,sans-serif}
+.f{width:100%;background:#000;border:1px solid #27272a;border-radius:12px;padding:10px 14px;color:#fff}
+.f:focus{border-color:#1e90ff;outline:none}
+.lb{display:block;font-size:12px;color:#a1a1aa;margin-bottom:4px}
+.card{background:#09090b;border:1px solid #27272a;border-radius:16px;padding:20px}
+input[type=color]{width:100%;height:42px;background:none;border:1px solid #27272a;border-radius:12px;padding:3px;cursor:pointer}
+#pv{width:960px;height:540px;transform-origin:top left;position:relative;overflow:hidden;border-radius:22px;box-shadow:0 0 60px rgba(30,144,255,.35);color:var(--tx)}
+.g{background:color-mix(in srgb,var(--bg) 78%,transparent);border:1px solid color-mix(in srgb,var(--p) 40%,transparent);border-radius:14px}
+.s{background:color-mix(in srgb,var(--tx) 10%,transparent)}
+.pt{background:linear-gradient(160deg,color-mix(in srgb,var(--p) 60%,transparent),color-mix(in srgb,var(--bg) 92%,#000))}
+:focus-visible{outline:2px solid #1e90ff;outline-offset:2px}
 </style>
 </head>
-<body>
+<body class="bg-black text-white min-h-screen">
 
-<div class="builder-container">
-  <!-- COLUNA ESQUERDA: CONTROLES E PLANOS -->
-  <div class="controls-pane">
-    <h1>🚀 Gerador IPTV White-Label</h1>
-    <p class="sub">Personalize seu player e escolha seu plano abaixo.</p>
+<header class="max-w-7xl mx-auto px-4 pt-8 pb-4 space-y-4">
+  <h1 class="text-3xl md:text-4xl font-extrabold">Monte o seu player, app, painel e página de vendas</h1>
+  <p class="text-zinc-400 max-w-2xl">Veja tudo ficando pronto ao lado, em tempo real. No final você envia o pedido e recebe o orçamento.</p>
+  <nav id="steps" class="flex flex-wrap gap-2" aria-label="Etapas"></nav>
+</header>
 
-    <!-- IDENTIDADE DO PLAYER -->
-    <div class="section-group">
-      <label class="group-title">1. Identidade Visual do Player</label>
-      <div class="control-item">
-        <label>Nome do Aplicativo</label>
-        <input type="text" id="appName" value="NextGen Play">
-      </div>
-      <div class="control-item" style="margin-top:8px;">
-        <label>Rodapé / Contato</label>
-        <input type="text" id="appContact" value="WhatsApp: (51) 98949-8171 • Atendimento 24h">
-      </div>
-      <div class="control-item" style="margin-top:8px;">
-        <label>Cores do Gradiente & Fundo</label>
-        <div class="color-group">
-          <div class="color-item"><input type="color" id="color1" value="#7c5cff" title="Cor 1"></div>
-          <div class="color-item"><input type="color" id="color2" value="#3b82f6" title="Cor 2"></div>
-          <div class="color-item"><input type="color" id="color3" value="#00d4ff" title="Cor 3"></div>
-          <div class="color-item"><input type="color" id="bgAppColor" value="#0f172a" title="Fundo"></div>
-        </div>
-      </div>
-    </div>
+<main class="max-w-7xl mx-auto px-4 pb-16 grid lg:grid-cols-[430px_1fr] gap-6">
 
-    <!-- ESCOLHA DE PLANOS E PREÇOS -->
-    <div class="section-group">
-      <label class="group-title">2. Escolha o Modelo de Contratação</label>
-      <div class="plans-grid">
-        
-        <!-- PLANO 1 -->
-        <div class="plan-card active" id="planCard1" onclick="selectPlan('plan1')">
-          <div class="plan-info">
-            <h3>Player Exclusivo</h3>
-            <p>Sem manutenção, APK seu para sempre.</p>
-          </div>
-          <div class="plan-price">
-            R$ 189,90
-            <span>único</span>
-          </div>
-        </div>
+<form id="f" class="space-y-4 order-2 lg:order-1" onsubmit="return false">
 
-        <!-- PLANO 2 -->
-        <div class="plan-card" id="planCard2" onclick="selectPlan('plan2')">
-          <div class="plan-info">
-            <h3>Projeto Completo + Painel</h3>
-            <p>Painel administrativo e gestão de clientes.</p>
-            
-            <div class="sub-clients-box show-sub" onclick="event.stopPropagation()">
-              <label style="font-size: 0.78rem; margin-bottom: 4px; display: block; color: var(--text);">Volume de Clientes (Manutenção):</label>
-              <select id="clientRange" onchange="updatePricing()">
-                <option value="40">Até 100 clientes (R$ 40/mês)</option>
-                <option value="75">De 101 a 200 clientes (R$ 75/mês)</option>
-                <option value="90">Acima de 200 clientes (R$ 90/mês)</option>
-              </select>
-
-              <label class="domain-checkbox">
-                <input type="checkbox" id="hasDomain" onchange="updatePricing()"> Adicionar Domínio Próprio (+ R$ 70/ano)
-              </label>
-
-              <div class="perks-list">
-                <span>✔ E-mail Profissional Grátis</span>
-                <span>✔ Conta no Banco de Dados Grátis</span>
-              </div>
-            </div>
-          </div>
-          <div class="plan-price">
-            R$ 359,00
-            <span id="lblMaintBadge">+ R$ 40/mês</span>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- RESUMO DO ORÇAMENTO -->
-    <div class="pricing-box">
-      <div class="title">Resumo do Investimento</div>
-      <div class="price-row"><span id="lblSelectedPlan">Player Exclusivo (Sem Manutenção)</span> <span id="lblPriceBase">R$ 189,90</span></div>
-      <div class="price-row" id="rowExtraMaint" style="display:none;"><span>Manutenção do Sistema:</span> <span id="lblMaintValue">R$ 40,00 /mês</span></div>
-      <div class="price-row" id="rowExtraDomain" style="display:none;"><span>Domínio Próprio:</span> <span>R$ 70,00 /ano</span></div>
-      <div class="price-total"><span>Total Inicial:</span> <span id="lblPriceTotal">R$ 189,90</span></div>
-    </div>
-
-    <button type="button" id="btnSubmit" class="btn-action" onclick="finalizarPedido()">💾 Salvar Configurações e Gerar App</button>
+<section data-step="1" class="card space-y-4">
+  <h2 class="font-bold text-lg">1. Player</h2>
+  <div class="grid grid-cols-2 gap-3">
+    <div><label class="lb" for="nome">Nome do player</label><input class="f" id="nome" data-k="nome" value="NextGen TV" maxlength="30"></div>
+    <div><label class="lb" for="slogan">Slogan</label><input class="f" id="slogan" data-k="slogan" value="A tecnologia na sua tela" maxlength="50"></div>
   </div>
-
-  <!-- COLUNA DIREITA: PREVIEW DO PLAYER AO VIVO -->
-  <div class="preview-pane">
-    <div class="tv-container" id="tvContainerScreenshot">
-      <div class="tv-screen" id="tvScreen">
-        
-        <div class="tv-header">
-          <div class="tv-brand" id="prevBrand">NextGen <span>Play</span></div>
-          <div class="tv-datetime">14:38 • Preview Ativo</div>
-        </div>
-
-        <div class="tv-menu">
-          <div class="tv-tab active" onclick="switchTab('live', this)">📺 AO VIVO</div>
-          <div class="tv-tab" onclick="switchTab('movies', this)">🎬 FILMES (VOD)</div>
-          <div class="tv-tab" onclick="switchTab('series', this)">🍿 SÉRIES</div>
-        </div>
-
-        <!-- Bloco de Continuar Assistindo (Filmes) -->
-        <div class="continue-watchlist" id="continueWatchlist">
-          <div class="continue-title"><span>▶ Continuar Assistindo</span> <span>Salvo no Banco</span></div>
-          <div class="continue-items">
-            <div class="continue-card">
-              <div class="continue-movie-name">🦸‍♂️ Vingadores: Ultimato</div>
-              <div class="progress-bar"><div class="progress-fill" style="width: 65%;"></div></div>
-            </div>
-            <div class="continue-card">
-              <div class="continue-movie-name">🏎️ Velozes & Furiosos 10</div>
-              <div class="progress-bar"><div class="progress-fill" style="width: 30%;"></div></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="tv-content-area" id="tvContent">
-          <div class="media-card"><div class="media-icon">⚽</div><div class="media-title">Premiere HD</div></div>
-          <div class="media-card"><div class="media-icon">🎬</div><div class="media-title">Telecine Action</div></div>
-          <div class="media-card"><div class="media-icon">🌍</div><div class="media-title">HBO Mundi</div></div>
-          <div class="media-card"><div class="media-icon">🥊</div><div class="media-title">Combate</div></div>
-        </div>
-
-        <div class="tv-footer" id="prevFooter">
-          WhatsApp: (51) 98949-8171 • Atendimento 24h
-        </div>
-
-      </div>
-    </div>
+  <div><label class="lb" for="logo">Logo (só aparece na prévia; envie o arquivo pelo WhatsApp depois)</label>
+    <input type="file" id="logo" accept="image/*" class="text-xs text-zinc-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-blue-600/20 file:text-blue-400 file:font-semibold"></div>
+  <div><span class="lb">Paleta</span><div id="pal" class="flex flex-wrap gap-3"></div></div>
+  <div class="grid grid-cols-3 gap-3">
+    <div><label class="lb" for="cp">Principal</label><input type="color" id="cp" data-k="p" value="#1e90ff"></div>
+    <div><label class="lb" for="cb">Fundo</label><input type="color" id="cb" data-k="bg" value="#000000"></div>
+    <div><label class="lb" for="ct">Texto</label><input type="color" id="ct" data-k="tx" value="#ffffff"></div>
   </div>
-</div>
+  <div class="grid grid-cols-3 gap-3">
+    <div><label class="lb" for="fonte">Fonte</label><select class="f" id="fonte" data-k="fonte"><option>Rajdhani</option><option>Inter</option><option>Poppins</option><option>Montserrat</option><option>Oswald</option></select></div>
+    <div><label class="lb" for="lista">Conteúdo em</label><select class="f" id="lista" data-k="lista"><option value="grade">Grade</option><option value="lista">Lista</option></select></div>
+    <div><label class="lb" for="abas">Abas</label><select class="f" id="abas" data-k="abas"><option value="topo">No topo</option><option value="rodape">No rodapé</option></select></div>
+  </div>
+  <div class="flex justify-end"><button type="button" data-go="2" class="bg-blue-600 hover:bg-blue-500 font-bold px-6 py-3 rounded-xl">Continuar</button></div>
+</section>
 
-<script>
-// --- CONFIGURAÇÃO DO FIREBASE (CONFIGURADA COM SEUS DADOS) ---
-const firebaseConfig = {
-  apiKey: "AIzaSyBrp9JlMd9zBQzByPRBLCStLiBh5z80Y",
+<section data-step="2" class="card space-y-4" hidden>
+  <h2 class="font-bold text-lg">2. App do cliente</h2>
+  <div><label class="lb" for="nomeApp">Nome do app (como aparece na TV e no celular)</label><input class="f" id="nomeApp" data-k="nomeApp" value="NextGen TV" maxlength="30"></div>
+  <div><label class="lb" for="servidor">Servidor padrão (opcional)</label><input class="f" id="servidor" data-k="servidor" placeholder="http://seu-servidor.com:8080"></div>
+  <label class="flex items-start gap-3 text-sm text-zinc-300"><input type="checkbox" data-k="travar" class="mt-1 h-4 w-4"> Travar o servidor: seu cliente final só digita usuário e senha.</label>
+  <div><label class="lb" for="boasTitulo">Boas-vindas: título</label><input class="f" id="boasTitulo" data-k="boasTitulo" value="Aviso importante" maxlength="40"></div>
+  <div><label class="lb" for="boasMsg">Boas-vindas: mensagem (depois você troca pelo painel)</label><textarea class="f" id="boasMsg" data-k="boasMsg" rows="3" maxlength="240">Bem-vindo! Novidades e avisos aparecem aqui.</textarea></div>
+  <div class="flex justify-between"><button type="button" data-go="1" class="bg-zinc-900 border border-zinc-700 px-5 py-3 rounded-xl font-semibold">Voltar</button><button type="button" data-go="3" class="bg-blue-600 hover:bg-blue-500 font-bold px-6 py-3 rounded-xl">Continuar</button></div>
+</section>
+
+<section data-step="3" class="card space-y-4" hidden>
+  <h2 class="font-bold text-lg">3. Painel de mensagens e cadastro</h2>
+  <div><label class="lb" for="painelNome">Nome do painel</label><input class="f" id="painelNome" data-k="painelNome" value="Painel de mensagens" maxlength="40"></div>
+  <div><span class="lb">Campos do cadastro dos seus clientes (o nome sempre aparece)</span>
+    <label class="flex gap-3 text-sm text-zinc-300 mb-2"><input type="checkbox" data-k="campoEmail" class="h-4 w-4" checked> E-mail</label>
+    <label class="flex gap-3 text-sm text-zinc-300 mb-2"><input type="checkbox" data-k="campoZap" class="h-4 w-4" checked> WhatsApp</label>
+    <input class="f" data-k="campoExtra" placeholder="Campo extra (opcional), ex.: Cidade" maxlength="30" aria-label="Campo extra"></div>
+  <div><span class="lb">Enviar mensagens aos clientes cadastrados por</span>
+    <label class="flex gap-3 text-sm text-zinc-300 mb-2"><input type="checkbox" data-k="viaZap" class="h-4 w-4" checked> WhatsApp</label>
+    <label class="flex gap-3 text-sm text-zinc-300"><input type="checkbox" data-k="viaEmail" class="h-4 w-4"> E-mail</label></div>
+  <div class="flex justify-between"><button type="button" data-go="2" class="bg-zinc-900 border border-zinc-700 px-5 py-3 rounded-xl font-semibold">Voltar</button><button type="button" data-go="4" class="bg-blue-600 hover:bg-blue-500 font-bold px-6 py-3 rounded-xl">Continuar</button></div>
+</section>
+
+<section data-step="4" class="card space-y-4" hidden>
+  <h2 class="font-bold text-lg">4. Página de vendas</h2>
+  <div><label class="lb" for="vTitulo">Título</label><input class="f" id="vTitulo" data-k="vTitulo" value="Assista onde e quando quiser" maxlength="60"></div>
+  <div><label class="lb" for="vSub">Subtítulo</label><input class="f" id="vSub" data-k="vSub" value="Conheça nossos planos e fale com a gente." maxlength="100"></div>
+  <div class="grid gap-3">
+    <input class="f" data-k="vB1" value="Qualidade e estabilidade" maxlength="40" aria-label="Benefício 1">
+    <input class="f" data-k="vB2" value="Suporte rápido" maxlength="40" aria-label="Benefício 2">
+    <input class="f" data-k="vB3" value="Funciona em vários aparelhos" maxlength="40" aria-label="Benefício 3">
+  </div>
+  <div class="grid grid-cols-2 gap-3">
+    <div><label class="lb" for="vBotao">Texto do botão</label><input class="f" id="vBotao" data-k="vBotao" value="Falar no WhatsApp" maxlength="30"></div>
+    <div><label class="lb" for="vZap">WhatsApp de vendas</label><input class="f" id="vZap" data-k="vZap" type="tel" placeholder="(00) 90000-0000"></div>
+  </div>
+  <div class="flex justify-between"><button type="button" data-go="3" class="bg-zinc-900 border border-zinc-700 px-5 py-3 rounded-xl font-semibold">Voltar</button><button type="button" data-go="5" class="bg-blue-600 hover:bg-blue-500 font-bold px-6 py-3 rounded-xl">Continuar</button></div>
+</section>
+
+<section data-step="5" class="card space-y-4 border-blue-600/40" hidden>
+  <h2 class="font-bold text-lg">5. Enviar pedido</h2>
+  <p class="text-sm text-zinc-400">Você não paga nada agora. Recebemos o seu projeto e enviamos o orçamento pelo WhatsApp.</p>
+  <div><span class="lb">O que você quer no projeto</span>
+    <label class="flex gap-3 text-sm text-zinc-300 mb-2"><input type="checkbox" checked disabled class="h-4 w-4"> Player e app Android</label>
+    <label class="flex gap-3 text-sm text-zinc-300 mb-2"><input type="checkbox" data-k="modPainel" class="h-4 w-4" checked> Painel de mensagens e cadastro</label>
+    <label class="flex gap-3 text-sm text-zinc-300"><input type="checkbox" data-k="modVendas" class="h-4 w-4" checked> Página de vendas</label></div>
+  <div><label class="lb" for="qtd">Quantos clientes você pretende atender?</label>
+    <select class="f" id="qtd" data-k="qtd"><option value="ate100">Até 100</option><option value="ate200">De 101 a 200</option><option value="mais200">Mais de 200</option></select></div>
+  <div class="grid sm:grid-cols-3 gap-3">
+    <div><label class="lb" for="cNome">Seu nome</label><input class="f" id="cNome" data-k="cNome" autocomplete="name" maxlength="80"></div>
+    <div><label class="lb" for="cZap">Seu WhatsApp</label><input class="f" id="cZap" data-k="cZap" type="tel" autocomplete="tel" placeholder="(00) 90000-0000"></div>
+    <div><label class="lb" for="cEmail">E-mail</label><input class="f" id="cEmail" data-k="cEmail" type="email" autocomplete="email" maxlength="120"></div>
+  </div>
+  <div><label class="lb" for="obs">Observações (opcional)</label><textarea class="f" id="obs" data-k="obs" rows="2" maxlength="400"></textarea></div>
+  <input data-k="site" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+  <label class="flex items-start gap-3 text-xs text-zinc-400"><input type="checkbox" data-k="aceite" class="mt-0.5 h-4 w-4"> Autorizo o uso dos meus dados para receber o orçamento e falar sobre o projeto.</label>
+  <div class="flex flex-wrap gap-3 items-center">
+    <button type="button" data-go="4" class="bg-zinc-900 border border-zinc-700 px-5 py-3 rounded-xl font-semibold">Voltar</button>
+    <button type="button" id="enviar" class="bg-blue-600 hover:bg-blue-500 font-bold px-6 py-3 rounded-xl">Enviar pedido de orçamento</button>
+  </div>
+  <p id="msg" class="text-sm text-zinc-400 min-h-[1.25rem]" aria-live="polite"></p>
+</section>
+
+</form>
+
+<aside class="order-1 lg:order-2">
+  <div class="lg:sticky lg:top-4 space-y-3">
+    <div id="tg" class="flex gap-2 justify-center" role="group" aria-label="Tela da prévia"></div>
+    <div id="pvWrap" class="w-full"><div id="pv" aria-label="Prévia em tempo real"></div></div>
+    <p class="text-xs text-zinc-500 text-center">Prévia ilustrativa. O resultado final segue as suas escolhas.</p>
+  </div>
+</aside>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+const db = getFirestore(initializeApp({
+  apiKey: "AIzaSyBrp9JlMd9zBUqzByPRBLCStLiLbH5z80Y",
   authDomain: "nextgentv.firebaseapp.com",
   projectId: "nextgentv",
   storageBucket: "nextgentv.firebasestorage.app",
   messagingSenderId: "999074190973",
   appId: "1:999074190973:web:967de16614c5274a760314"
+}));
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const S = {nome:'NextGen TV', slogan:'A tecnologia na sua tela', logo:'', p:'#1e90ff', bg:'#000000', tx:'#ffffff', fonte:'Rajdhani', lista:'grade', abas:'topo',
+  nomeApp:'NextGen TV', servidor:'', travar:false, boasTitulo:'Aviso importante', boasMsg:'Bem-vindo! Novidades e avisos aparecem aqui.',
+  painelNome:'Painel de mensagens', campoEmail:true, campoZap:true, campoExtra:'', viaZap:true, viaEmail:false,
+  vTitulo:'Assista onde e quando quiser', vSub:'Conheça nossos planos e fale com a gente.', vB1:'Qualidade e estabilidade', vB2:'Suporte rápido', vB3:'Funciona em vários aparelhos', vBotao:'Falar no WhatsApp', vZap:'',
+  modPainel:true, modVendas:true, qtd:'ate100', cNome:'', cZap:'', cEmail:'', obs:'', site:'', aceite:false};
+const STEPS = [['Player',[['lista','Lista'],['detalhe','Detalhes']]],['App',[['login','Login'],['boas','Boas-vindas']]],
+  ['Painel e cadastro',[['painel','Painel'],['cadastro','Cadastro']]],['Página de vendas',[['vendas','Página']]],['Enviar',[['lista','Player']]]];
+let step = 1, tela = 'lista';
+
+const contraste = h => { const n = parseInt(h.slice(1), 16); return (((n >> 16) * 299 + ((n >> 8) & 255) * 587 + (n & 255) * 114) / 1000) > 150 ? '#000' : '#fff'; };
+const bgGlow = () => `background:radial-gradient(700px 400px at 8% -8%,color-mix(in srgb,var(--p) 45%,transparent),transparent 70%),radial-gradient(520px 360px at 98% 108%,color-mix(in srgb,var(--p) 30%,transparent),transparent 70%),var(--bg)`;
+const logo = (n = 40) => S.logo ? `<img src="${S.logo}" alt="" style="width:${n}px;height:${n}px;object-fit:contain;border-radius:10px">`
+  : `<div style="width:${n}px;height:${n}px;border-radius:10px;background:var(--p);color:var(--pc);display:grid;place-items:center;font-weight:700;font-size:${n * .5}px">${esc((S.nome || 'N')[0].toUpperCase())}</div>`;
+const tabs = () => ['Início','Ao vivo','Filmes','Séries','Continuar','Favoritos'].map((t, i) =>
+  `<span style="padding:7px 18px;border-radius:999px;font-weight:600;font-size:17px;${i == 2 ? 'background:var(--p);color:var(--pc);box-shadow:0 0 22px var(--p)' : 'background:color-mix(in srgb,var(--tx) 10%,transparent)'}">${t}</span>`).join('');
+const chipSt = 'padding:5px 14px;border-radius:999px;font-size:15px;border:1px solid color-mix(in srgb,var(--p) 55%,transparent);background:color-mix(in srgb,var(--p) 15%,transparent)';
+const btn = (t, on) => `<span style="padding:11px 24px;border-radius:12px;font-weight:700;font-size:18px;${on ? 'background:var(--p);color:var(--pc);box-shadow:0 0 28px var(--p)' : 'border:1px solid color-mix(in srgb,var(--p) 50%,transparent)'}">${t}</span>`;
+
+function sceneLista() {
+  const cats = ['Todos','Ação','Comédia','Drama','Ficção','Infantil'].map((c, i) => `<div style="padding:10px 14px;border-radius:10px;font-size:16px;${i ? '' : 'background:color-mix(in srgb,var(--p) 35%,transparent);border:1px solid var(--p)'}">${c}</div>`).join('');
+  const corpo = S.lista === 'grade'
+    ? `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">${[1,2,3,4,5,6,7,8].map(n => `<div><div class="pt" style="height:104px;border-radius:10px;border:1px solid color-mix(in srgb,var(--p) 40%,transparent);${n == 1 ? 'box-shadow:0 0 0 3px var(--p),0 0 26px var(--p)' : ''}"></div><div style="font-size:14px;margin-top:6px">Título ${n}</div></div>`).join('')}</div>`
+    : `<div style="display:flex;flex-direction:column;gap:8px">${[1,2,3,4,5,6].map(n => `<div class="s" style="display:flex;align-items:center;gap:12px;padding:8px 14px;border-radius:10px;font-size:17px;${n == 1 ? 'outline:2px solid var(--p)' : ''}"><div class="pt" style="width:34px;height:34px;border-radius:8px"></div>Canal ${n}</div>`).join('')}</div>`;
+  const nav = `<div style="display:flex;gap:10px;padding:0 4px">${tabs()}</div>`;
+  return `<div style="position:absolute;inset:0;padding:22px 28px;display:flex;flex-direction:column;gap:14px;${bgGlow()}">
+<div style="display:flex;align-items:center;gap:12px">${logo(40)}<span style="font-weight:700;font-size:28px">${esc(S.nome)}</span>${S.abas === 'topo' ? `<div style="margin-left:18px">${nav}</div>` : ''}</div>
+<div style="display:flex;gap:16px;flex:1;min-height:0"><div class="g" style="width:190px;padding:10px;display:flex;flex-direction:column;gap:6px">${cats}</div><div class="g" style="flex:1;padding:16px;overflow:hidden">${corpo}</div></div>
+${S.abas === 'rodape' ? nav : ''}</div>`;
+}
+function sceneDetalhe() {
+  return `<div style="position:absolute;inset:0;${bgGlow()}"><div style="position:absolute;inset:0;background:linear-gradient(90deg,var(--bg) 12%,color-mix(in srgb,var(--bg) 60%,transparent) 55%,transparent)"></div>
+<div style="position:relative;display:flex;gap:34px;padding:40px 46px"><div class="pt" style="width:200px;height:300px;flex:none;border-radius:14px;border:1px solid var(--p);box-shadow:0 0 36px color-mix(in srgb,var(--p) 50%,transparent)"></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px"><div style="font-weight:700;font-size:40px">Título do filme</div>
+<div style="display:flex;gap:8px"><span style="${chipSt}">Ano</span><span style="${chipSt}">★ Nota</span><span style="${chipSt}">Gênero</span></div>
+<div style="height:12px;width:90%;border-radius:6px" class="s"></div><div style="height:12px;width:80%;border-radius:6px" class="s"></div><div style="height:12px;width:60%;border-radius:6px" class="s"></div>
+<div style="display:flex;gap:12px;margin-top:8px">${btn('▶ Assistir', 1)}${btn('☆ Favoritar')}${btn('Voltar')}</div>
+<div class="g" style="padding:10px;display:flex;flex-direction:column;gap:6px;margin-top:6px"><div style="padding:8px 12px;font-size:15px">✓ T1 E1 · Episódio</div><div style="padding:8px 12px;font-size:15px;border-radius:8px;background:color-mix(in srgb,var(--p) 30%,transparent)">T1 E2 · Episódio</div></div></div></div></div>`;
+}
+function sceneLogin() {
+  const campo = t => `<div class="s" style="padding:12px 16px;border-radius:12px;font-size:17px;opacity:.85">${t}</div>`;
+  return `<div style="position:absolute;inset:0;display:grid;place-items:center;${bgGlow()}"><div style="width:420px;display:flex;flex-direction:column;gap:12px;text-align:center;align-items:center">${logo(84)}
+<div style="font-weight:700;font-size:38px">${esc(S.nomeApp)}</div><div style="font-size:16px;opacity:.7;margin-top:-6px">${esc(S.slogan)}</div>
+<div style="width:100%;display:flex;flex-direction:column;gap:10px">${S.travar ? '' : campo(esc(S.servidor) || 'Servidor')}${campo('Usuário')}${campo('Senha')}<div style="padding:13px;border-radius:12px;background:var(--p);color:var(--pc);font-weight:700;font-size:20px">Entrar</div></div></div></div>`;
+}
+function sceneBoas() {
+  return sceneLogin() + `<div style="position:absolute;inset:0;background:rgba(0,0,0,.72);display:grid;place-items:center"><div class="g" style="width:520px;padding:30px;text-align:center;display:flex;flex-direction:column;gap:14px;background:var(--bg)">
+<div style="font-weight:700;font-size:30px">${esc(S.boasTitulo)}</div><div style="font-size:18px;opacity:.85;line-height:1.5">${esc(S.boasMsg)}</div><div style="padding:11px;border-radius:12px;background:var(--p);color:var(--pc);font-weight:700;font-size:18px">Fechar</div></div></div>`;
+}
+function scenePainel() {
+  const via = [S.viaZap ? 'WhatsApp' : '', S.viaEmail ? 'E-mail' : ''].filter(Boolean).join(' + ') || 'Aviso no app';
+  const rows = [1, 2, 3, 4].map(n => `<div class="s" style="display:flex;justify-content:space-between;padding:11px 14px;border-radius:10px;font-size:16px"><span>Cliente ${n}</span><span style="opacity:.7">${S.campoZap ? 'WhatsApp' : ''}${S.campoZap && S.campoEmail ? ' · ' : ''}${S.campoEmail ? 'E-mail' : ''}</span></div>`).join('');
+  return `<div style="position:absolute;inset:0;padding:30px 36px;${bgGlow()}"><div style="font-weight:700;font-size:32px;margin-bottom:16px">${esc(S.painelNome)}</div>
+<div style="display:flex;gap:18px"><div class="g" style="flex:1.1;padding:18px;display:flex;flex-direction:column;gap:12px"><div style="font-size:16px;opacity:.7">Mensagem para seus clientes (${esc(via)})</div><div class="s" style="padding:14px;border-radius:12px;font-size:17px;min-height:110px">${esc(S.boasMsg)}</div>${btn('Enviar mensagem', 1)}</div>
+<div class="g" style="flex:1;padding:18px;display:flex;flex-direction:column;gap:8px"><div style="font-size:16px;opacity:.7">Clientes cadastrados</div>${rows}</div></div></div>`;
+}
+function sceneCadastro() {
+  const campo = t => `<div class="s" style="padding:12px 16px;border-radius:12px;font-size:17px;opacity:.85">${esc(t)}</div>`;
+  return `<div style="position:absolute;inset:0;display:grid;place-items:center;${bgGlow()}"><div class="g" style="width:440px;padding:30px;display:flex;flex-direction:column;gap:12px"><div style="font-weight:700;font-size:30px">Cadastro de acesso</div>
+${campo('Nome')}${S.campoEmail ? campo('E-mail') : ''}${S.campoZap ? campo('WhatsApp') : ''}${S.campoExtra ? campo(S.campoExtra) : ''}
+<div style="font-size:13px;opacity:.65">Concordo em receber mensagens de ${esc(S.nomeApp)}.</div><div style="padding:13px;border-radius:12px;background:var(--p);color:var(--pc);font-weight:700;font-size:19px;text-align:center">Acessar</div></div></div>`;
+}
+function sceneVendas() {
+  const card = t => `<div class="g" style="flex:1;padding:18px;font-size:19px;font-weight:600">${esc(t)}</div>`;
+  return `<div style="position:absolute;inset:0;${bgGlow()}"><div class="s" style="height:38px;display:flex;align-items:center;padding:0 16px;font-size:14px;opacity:.8">sua-pagina.com.br</div>
+<div style="padding:34px 50px;display:flex;flex-direction:column;gap:16px"><div style="display:flex;align-items:center;gap:12px">${logo(40)}<span style="font-weight:700;font-size:26px">${esc(S.nomeApp)}</span></div>
+<div style="font-weight:700;font-size:50px;line-height:1.05;margin-top:16px">${esc(S.vTitulo)}</div><div style="font-size:21px;opacity:.8">${esc(S.vSub)}</div>
+<div style="margin-top:6px">${btn(esc(S.vBotao), 1)}</div><div style="display:flex;gap:14px;margin-top:20px">${card(S.vB1)}${card(S.vB2)}${card(S.vB3)}</div></div></div>`;
+}
+const CENAS = {lista: sceneLista, detalhe: sceneDetalhe, login: sceneLogin, boas: sceneBoas, painel: scenePainel, cadastro: sceneCadastro, vendas: sceneVendas};
+
+function render() {
+  const pv = $('pv');
+  pv.style.setProperty('--p', S.p); pv.style.setProperty('--bg', S.bg); pv.style.setProperty('--tx', S.tx); pv.style.setProperty('--pc', contraste(S.p));
+  pv.style.fontFamily = `'${S.fonte}', sans-serif`;
+  pv.innerHTML = CENAS[tela]();
+  $('steps').innerHTML = '';
+  STEPS.forEach(([nome], i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = `${i + 1}. ${nome}`;
+    b.className = 'px-4 py-2 rounded-xl text-sm font-semibold border ' + (i + 1 === step ? 'bg-blue-600 border-blue-600' : 'border-zinc-700 bg-zinc-900');
+    b.onclick = () => go(i + 1); $('steps').append(b);
+  });
+  $('tg').innerHTML = '';
+  STEPS[step - 1][1].forEach(([k, nome]) => {
+    if (STEPS[step - 1][1].length < 2) return;
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = nome;
+    b.className = 'px-4 py-2 rounded-xl text-sm font-semibold border ' + (k === tela ? 'bg-blue-600 border-blue-600' : 'border-zinc-700');
+    b.onclick = () => { tela = k; render(); }; $('tg').append(b);
+  });
+  fit();
+}
+function fit() { const k = $('pvWrap').clientWidth / 960; $('pv').style.transform = `scale(${k})`; $('pvWrap').style.height = (540 * k) + 'px'; }
+function go(n) {
+  step = n; tela = STEPS[n - 1][1][0][0];
+  document.querySelectorAll('[data-step]').forEach(s => s.hidden = +s.dataset.step !== n);
+  render(); scrollTo({top: 0, behavior: 'smooth'});
+}
+new ResizeObserver(fit).observe($('pvWrap'));
+document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => go(+b.dataset.go));
+
+const PAL = [['Azul','#1e90ff','#000000','#ffffff'],['Vermelho','#e50914','#0b0b0b','#ffffff'],['Verde','#22c55e','#06130b','#ffffff'],['Roxo','#8b5cf6','#0d0a18','#ffffff'],['Laranja','#f97316','#120a04','#ffffff'],['Dourado','#d4a017','#0a0804','#ffffff'],['Claro','#2563eb','#ffffff','#111827']];
+PAL.forEach(([n, p, bg, tx]) => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.title = n; b.setAttribute('aria-label', 'Paleta ' + n);
+  b.className = 'w-10 h-10 rounded-full border-2 border-zinc-600';
+  b.style.background = `linear-gradient(135deg, ${p} 50%, ${bg} 50%)`;
+  b.onclick = () => { Object.assign(S, {p, bg, tx}); $('cp').value = p; $('cb').value = bg; $('ct').value = tx; render(); };
+  $('pal').append(b);
+});
+$('f').addEventListener('input', e => {
+  const k = e.target.dataset.k; if (!k) return;
+  S[k] = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+  if (k === 'nome' && S.nomeApp === (S._n || 'NextGen TV')) { S.nomeApp = S.nome; $('nomeApp').value = S.nome; }
+  S._n = S.nome; render();
+});
+$('logo').onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader(); r.onload = () => { S.logo = r.result; render(); }; r.readAsDataURL(f);
 };
 
-// Inicializa o Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-const inputName = document.getElementById('appName');
-const inputContact = document.getElementById('appContact');
-const color1 = document.getElementById('color1');
-const color2 = document.getElementById('color2');
-const color3 = document.getElementById('color3');
-const bgAppColor = document.getElementById('bgAppColor');
-const tvScreen = document.getElementById('tvScreen');
-const prevBrand = document.getElementById('prevBrand');
-const prevFooter = document.getElementById('prevFooter');
-const tvContent = document.getElementById('tvContent');
-const continueWatchlist = document.getElementById('continueWatchlist');
-
-const lblSelectedPlan = document.getElementById('lblSelectedPlan');
-const lblPriceBase = document.getElementById('lblPriceBase');
-const rowExtraMaint = document.getElementById('rowExtraMaint');
-const lblMaintValue = document.getElementById('lblMaintValue');
-const lblMaintBadge = document.getElementById('lblMaintBadge');
-const rowExtraDomain = document.getElementById('rowExtraDomain');
-const lblPriceTotal = document.getElementById('lblPriceTotal');
-const clientRange = document.getElementById('clientRange');
-const hasDomain = document.getElementById('hasDomain');
-const btnSubmit = document.getElementById('btnSubmit');
-
-let activePlan = 'plan1';
-
-function selectPlan(plan) {
-  activePlan = plan;
-  document.getElementById('planCard1').classList.remove('active');
-  document.getElementById('planCard2').classList.remove('active');
-  document.getElementById('planCard' + (plan === 'plan1' ? '1' : '2')).classList.add('active');
-  updatePricing();
-}
-
-function updatePricing() {
-  if (activePlan === 'plan1') {
-    lblSelectedPlan.textContent = 'Player Exclusivo (Sem Manutenção)';
-    lblPriceBase.textContent = 'R$ 189,90';
-    rowExtraMaint.style.display = 'none';
-    rowExtraDomain.style.display = 'none';
-    lblPriceTotal.textContent = 'R$ 189,90';
-  } else {
-    const maintCost = parseInt(clientRange.value);
-    const domainActive = hasDomain.checked;
-
-    lblSelectedPlan.textContent = 'Projeto Completo + Painel + Gestão';
-    lblPriceBase.textContent = 'R$ 359,00';
-    
-    rowExtraMaint.style.display = 'flex';
-    lblMaintValue.textContent = `R$ ${maintCost},00 /mês`;
-    lblMaintBadge.textContent = `+ R$ ${maintCost}/mês`;
-
-    let totalText = `R$ 359,00 (+ R$ ${maintCost},00/mês)`;
-    if (domainActive) {
-      rowExtraDomain.style.display = 'flex';
-      totalText += ' + Domínio (R$ 70/ano)';
-    } else {
-      rowExtraDomain.style.display = 'none';
-    }
-
-    lblPriceTotal.textContent = totalText;
-  }
-}
-
-function updatePreviewVisual() {
-  const nameVal = inputName.value.trim() || 'Player';
-  prevBrand.innerHTML = nameVal + ' <span>Play</span>';
-  prevFooter.textContent = inputContact.value.trim();
-
-  tvScreen.style.setProperty('--c1', color1.value);
-  tvScreen.style.setProperty('--c2', color2.value);
-  tvScreen.style.setProperty('--c3', color3.value);
-  tvScreen.style.setProperty('--preview-bg', bgAppColor.value);
-  tvScreen.style.backgroundColor = bgAppColor.value;
-}
-
-inputName.oninput = updatePreviewVisual;
-inputContact.oninput = updatePreviewVisual;
-color1.oninput = updatePreviewVisual;
-color2.oninput = updatePreviewVisual;
-color3.oninput = updatePreviewVisual;
-bgAppColor.oninput = updatePreviewVisual;
-
-function switchTab(tab, el) {
-  document.querySelectorAll('.tv-tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-
-  if (tab === 'movies') {
-    continueWatchlist.classList.add('active');
-    tvContent.innerHTML = `
-      <div class="media-card"><div class="media-icon">🦸‍♂️</div><div class="media-title">Vingadores</div></div>
-      <div class="media-card"><div class="media-icon">🕷️</div><div class="media-title">Homem-Aranha</div></div>
-      <div class="media-card"><div class="media-icon">🦇</div><div class="media-title">Batman</div></div>
-      <div class="media-card"><div class="media-icon">🏎️</div><div class="media-title">Velozes 10</div></div>
-    `;
-  } else if (tab === 'series') {
-    continueWatchlist.classList.remove('active');
-    tvContent.innerHTML = `
-      <div class="media-card"><div class="media-icon">⚡</div><div class="media-title">Stranger Things</div></div>
-      <div class="media-card"><div class="media-icon">👑</div><div class="media-title">The Crown</div></div>
-      <div class="media-card"><div class="media-icon">🐉</div><div class="media-title">House of Dragon</div></div>
-      <div class="media-card"><div class="media-icon">💊</div><div class="media-title">Breaking Bad</div></div>
-    `;
-  } else {
-    continueWatchlist.classList.remove('active');
-    tvContent.innerHTML = `
-      <div class="media-card"><div class="media-icon">⚽</div><div class="media-title">Premiere HD</div></div>
-      <div class="media-card"><div class="media-icon">🎬</div><div class="media-title">Telecine Action</div></div>
-      <div class="media-card"><div class="media-icon">🌍</div><div class="media-title">HBO Mundi</div></div>
-      <div class="media-card"><div class="media-icon">🥊</div><div class="media-title">Combate</div></div>
-    `;
-  }
-}
-
-updatePreviewVisual();
-
-// Função para fechar o pedido, gerar imagem, capturar cores exatas e salvar no Firebase
-async function finalizarPedido() {
-  btnSubmit.disabled = true;
-  btnSubmit.textContent = '⏳ Gerando print e salvando no Firebase...';
-
+const msg = (t, erro) => { $('msg').textContent = t; $('msg').style.color = erro ? '#f87171' : '#a1a1aa'; };
+$('enviar').onclick = async () => {
+  if (S.site) return;
+  if (!S.nomeApp.trim() || !S.cNome.trim() || S.cZap.replace(/\D/g, '').length < 10) { msg('Preencha o nome do app, o seu nome e o WhatsApp com DDD.', true); return; }
+  if (!S.aceite) { msg('Marque a autorização para enviarmos o orçamento.', true); return; }
+  $('enviar').disabled = true; msg('Enviando...');
+  const dados = {
+    versao: 2, origem: 'criador', status: 'novo',
+    player: {nome: S.nome, slogan: S.slogan, cores: {principal: S.p, fundo: S.bg, texto: S.tx}, fonte: S.fonte, conteudo: S.lista, abas: S.abas, logoAnexado: !!S.logo},
+    app: {nome: S.nomeApp, servidor: S.servidor, servidorTravado: S.travar, boasVindas: {titulo: S.boasTitulo, mensagem: S.boasMsg}},
+    painel: {nome: S.painelNome, cadastro: {email: S.campoEmail, whatsapp: S.campoZap, extra: S.campoExtra}, envioPor: {whatsapp: S.viaZap, email: S.viaEmail}},
+    vendas: {titulo: S.vTitulo, subtitulo: S.vSub, beneficios: [S.vB1, S.vB2, S.vB3], botao: S.vBotao, whatsapp: S.vZap},
+    modulos: {painel: S.modPainel, vendas: S.modVendas}, clientesPrevistos: S.qtd,
+    contato: {nome: S.cNome, whatsapp: S.cZap, email: S.cEmail}, observacoes: S.obs,
+    // campos antigos, para o painel atual continuar lendo
+    appName: S.nomeApp, appContact: S.vZap || S.cZap, cores: {cor1: S.p, cor2: S.p, cor3: S.p, fundo: S.bg},
+    planoSelecionado: 'Orçamento pendente', manutencaoMensal: 0, dominioProprio: false, resumoTotal: 'A definir',
+    criadoEm: serverTimestamp()
+  };
   try {
-    // 1. Gera a imagem do player em base64 usando html2canvas
-    const containerEl = document.getElementById('tvContainerScreenshot');
-    const canvas = await html2canvas(containerEl, { scale: 0.8, backgroundColor: null });
-    const playerImageBase64 = canvas.toDataURL('image/png');
-
-    // 2. Coleta os dados de cores e configurações
-    const dadosProjeto = {
-      appName: inputName.value.trim(),
-      appContact: inputContact.value.trim(),
-      cores: {
-        cor1: color1.value,       // Ex: #7c5cff
-        cor2: color2.value,       // Ex: #3b82f6
-        cor3: color3.value,       // Ex: #00d4ff
-        fundo: bgAppColor.value   // Ex: #0f172a
-      },
-      planoSelecionado: activePlan === 'plan1' ? 'Player Exclusivo' : 'Projeto Completo + Painel',
-      manutencaoMensal: activePlan === 'plan2' ? parseInt(clientRange.value) : 0,
-      dominioProprio: activePlan === 'plan2'  ? hasDomain.checked : false,
-      resumoTotal: lblPriceTotal.textContent,
-      playerImage: playerImageBase64, // Imagem pronta para exibir no seu painel
-      criadoEm: firebase.firestore.FieldValue.serverTimestamp()
-    };
-
-    // 3. Salva na coleção "projetos_clientes" do Firestore
-    await db.collection('projetos_clientes').add(dadosProjeto);
-
-    alert('✅ Projeto salvo com sucesso no Firebase!');
-  } catch (error) {
-    console.error('Erro ao salvar no Firebase:', error);
-    alert('❌ Erro ao salvar o pedido. Verifique o console para detalhes.');
-  } finally {
-    btnSubmit.disabled = false;
-    btnSubmit.textContent = '💾 Salvar Configurações e Gerar App';
+    await addDoc(collection(db, 'projetos_clientes'), dados);
+    $('f').innerHTML = '<section class="card space-y-3 text-center"><h2 class="text-2xl font-extrabold">Pedido enviado!</h2><p class="text-zinc-400">Recebemos o seu projeto. Em breve enviamos o orçamento pelo WhatsApp.</p></section>';
+  } catch (e) {
+    console.error(e); $('enviar').disabled = false; msg('Não foi possível enviar agora. Tente de novo em instantes.', true);
   }
-}
+};
+go(1);
 </script>
-
 </body>
 </html>
